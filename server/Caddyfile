@@ -52,7 +52,7 @@ acme.gdllc.ru, acme.gdllc.local {
 		ca gdllc
 
 		allow {
-			domains gdllc.ru gdllc.local
+			domains *.gdllc.ru gdllc.ru *.gdllc.local gdllc.local *.gdllc.dev gdllc.dev
 		}
 	}
 

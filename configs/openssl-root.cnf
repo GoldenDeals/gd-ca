@@ -59,7 +59,7 @@ basicConstraints = critical, CA:true, pathlen:1
 keyUsage         = critical, keyCertSign, cRLSign
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always
-nameConstraints = permitted;DNS:.goldendeals.ru,permitted;DNS:.gdllc.ru,permitted;DNS:.gdllc.dev
+nameConstraints = permitted;DNS:goldendeals.ru,permitted;DNS:.goldendeals.ru,permitted;DNS:gdllc.ru,permitted;DNS:.gdllc.ru,permitted;DNS:gdllc.dev,permitted;DNS:.gdllc.dev,permitted;DNS:gdllc.local,permitted;DNS:.gdllc.local
 
 [ crl_ext ]
 authorityKeyIdentifier=keyid:always
@@ -71,4 +71,4 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always,issuer
 
 # Only issue for these org domains
-nameConstraints = permitted;DNS:.goldendeals.ru,permitted;DNS:.gdllc.ru,permitted;DNS:.gdllc.dev,permitted;DNS:.gdllc.local
+nameConstraints = permitted;DNS:goldendeals.ru,permitted;DNS:.goldendeals.ru,permitted;DNS:gdllc.ru,permitted;DNS:.gdllc.ru,permitted;DNS:gdllc.dev,permitted;DNS:.gdllc.dev,permitted;DNS:gdllc.local,permitted;DNS:.gdllc.local
