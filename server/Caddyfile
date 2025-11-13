@@ -12,7 +12,6 @@
     }
 }
 
-# ACME server endpoint for internal certificate issuance
 acme.gdllc.local, acme.gdllc.dev {
     ratelimit {
         zone acme {
@@ -30,10 +29,7 @@ acme.gdllc.local, acme.gdllc.dev {
     }
 }
 
-# Public CA server - serves certificates and CRLs from git repository
 :80 {
-    root * /srv/public
-
     filesystem ca-repo git https://github.com/YOUR_USERNAME/YOUR_REPO.git {
         refresh_period 5m
     }
@@ -46,6 +42,8 @@ acme.gdllc.local, acme.gdllc.dev {
             burst 100
         }
     }
+
+    root * /public
 
     file_server {
         fs ca-repo
