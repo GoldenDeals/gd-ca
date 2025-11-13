@@ -107,17 +107,17 @@ ca.gdllc.ru {
 	route {
 		import rate_limit_moderate
 
-		@root path /
-		handle @root {
-			rewrite * /index.html
+		@public_files path /certs/* /crl/* /bundle.pem /index.html
+		handle @public_files {
 			file_server {
 				fs ca-repo
 				root public
 			}
 		}
 
-		@public_certs path /certs/* /crl/* /bundle.pem /index.html
-		handle @public_certs {
+		@root path /
+		handle @root {
+			rewrite * /index.html
 			file_server {
 				fs ca-repo
 				root public
@@ -146,24 +146,24 @@ ca.gdllc.local ca.gdllc.dev {
 	import security_headers
 
 	@internal_only {
-		remote_ip 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.1/8
+		remote_ip 10.0.0.0/12 172.16.0.0/12 192.168.0.0/16 127.0.0.1/8
 	}
 
 	handle @internal_only {
 		route {
 			import rate_limit_strict
 
-			@root path /
-			handle @root {
-				rewrite * /index.html
+			@public_files path /certs/* /crl/* /bundle.pem /index.html
+			handle @public_files {
 				file_server {
 					fs ca-repo
 					root public
 				}
 			}
 
-			@public_certs path /certs/* /crl/* /bundle.pem /index.html
-			handle @public_certs {
+			@root path /
+			handle @root {
+				rewrite * /index.html
 				file_server {
 					fs ca-repo
 					root public
