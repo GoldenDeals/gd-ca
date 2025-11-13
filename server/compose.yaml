@@ -1,0 +1,23 @@
+services:
+  ca-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-server
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ca/root/root.cert.pem:/etc/caddy/ca/root.cert.pem:ro
+
+      - ./ca/departments/local/ca.cert.pem:/etc/caddy/ca/intermediate.cert.pem:ro
+      - ./ca/departments/local/private/ca.key.pem:/etc/caddy/ca/intermediate.key.pem:ro
+
+      - ./ca/departments/local/certs/ACME_Server_HTTP_Certificate__20251113114744.fullchain.pem:/etc/caddy/ca/acme-server.cert.pem:ro
+      - ./ca/departments/local/certs/ACME_Server_HTTP_Certificate__20251113114744.key.pem:/etc/caddy/ca/acme-server.key.pem:ro
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+
