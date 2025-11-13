@@ -4,9 +4,8 @@ set -euo pipefail
 # ============================================================
 # update-public.sh
 #   Creates certificate bundle (Root CA + all Department CAs)
-#   and CRL bundle (Root CRL + all Department CRLs)
-#   and places them in the ./public folder
-#   Individual CRLs are also copied to ./public/crl/
+#   Individual CA certificates are copied to ./public/certs/
+#   Individual CRLs are copied to ./public/crl/
 #
 #   Usage:
 #     ./scripts/update-public.sh
@@ -17,12 +16,13 @@ ROOT_CRL="ca/root/crl/root.crl.pem"
 DEPT_BASE="ca/departments"
 PUBLIC_DIR="public"
 
-CA_BUNDLE="$PUBLIC_DIR/ca-bundle.pem"
-CRL_BUNDLE="$PUBLIC_DIR/crl-bundle.pem"
+CA_BUNDLE="$PUBLIC_DIR/bundle.pem"
+CERT_DIR="$PUBLIC_DIR/certs"
 CRL_DIR="$PUBLIC_DIR/crl"
 
 # --- Ensure public directories exist ---
 mkdir -p "$PUBLIC_DIR"
+mkdir -p "$CERT_DIR"
 mkdir -p "$CRL_DIR"
 
 # --- Create CA certificate bundle ---
@@ -57,37 +57,31 @@ done
 
 echo "[OK] CA bundle created: $CA_BUNDLE ($cert_count certificates)"
 
-# --- Create CRL bundle ---
-echo "[*] Creating CRL bundle..."
+# --- Copy individual CA certificates to public/certs/ ---
+echo "[*] Copying individual CA certificates..."
 
-if [[ ! -f "$ROOT_CRL" ]]; then
-  echo "[ERROR] Root CRL not found: $ROOT_CRL" >&2
-  exit 1
+# Copy root CA certificate
+if [[ -f "$ROOT_CERT" ]]; then
+  cp "$ROOT_CERT" "$CERT_DIR/root.cert.pem"
+  echo "  + Copied root.cert.pem"
 fi
 
-# Start with root CRL
-cat "$ROOT_CRL" > "$CRL_BUNDLE"
-echo "" >> "$CRL_BUNDLE"
-
-# Add all department CRLs
-crl_count=1
+# Copy all department CA certificates
+individual_cert_count=1
 for dept_dir in "$DEPT_BASE"/*; do
   [[ ! -d "$dept_dir" ]] && continue
   
   dept_name=$(basename "$dept_dir")
-  dept_crl="$dept_dir/crl/$dept_name.crl.pem"
+  dept_cert="$dept_dir/ca.cert.pem"
   
-  if [[ -f "$dept_crl" ]]; then
-    echo "  + Adding $dept_name CRL"
-    cat "$dept_crl" >> "$CRL_BUNDLE"
-    echo "" >> "$CRL_BUNDLE"
-    crl_count=$((crl_count + 1))
-  else
-    echo "  ! Warning: CRL not found for department $dept_name" >&2
+  if [[ -f "$dept_cert" ]]; then
+    cp "$dept_cert" "$CERT_DIR/$dept_name.cert.pem"
+    echo "  + Copied $dept_name.cert.pem"
+    individual_cert_count=$((individual_cert_count + 1))
   fi
 done
 
-echo "[OK] CRL bundle created: $CRL_BUNDLE ($crl_count CRLs)"
+echo "[OK] Individual CA certificates copied: $individual_cert_count files in $CERT_DIR/"
 
 # --- Copy individual CRLs to public/crl/ ---
 echo "[*] Copying individual CRLs..."
@@ -118,10 +112,10 @@ echo "[OK] Individual CRLs copied: $individual_count files in $CRL_DIR/"
 # --- Summary ---
 echo ""
 echo "=========================================="
-echo "  Public bundles updated successfully"
+echo "  Public files updated successfully"
 echo "=========================================="
 echo ""
-echo "  CA Bundle:       $CA_BUNDLE"
-echo "  CRL Bundle:      $CRL_BUNDLE"
-echo "  Individual CRLs: $CRL_DIR/"
+echo "  CA Bundle:          $CA_BUNDLE"
+echo "  Individual Certs:   $CERT_DIR/"
+echo "  Individual CRLs:    $CRL_DIR/"
 echo ""
