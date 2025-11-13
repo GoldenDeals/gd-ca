@@ -1,0 +1,74 @@
+# OpenSSL Root CA config - Golden Deals LLC
+# Strong defaults, UTF-8, SHA-256, CRLs enabled
+
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir               = ./ca/root
+certs             = $dir/certs
+crl_dir           = $dir/crl
+database          = $dir/index.txt
+new_certs_dir     = $dir/newcerts
+certificate       = $dir/root.cert.pem
+serial            = $dir/serial
+crlnumber         = $dir/crlnumber
+crl               = $dir/crl/root.crl.pem
+private_key       = $dir/private/root.key.pem
+RANDFILE          = $dir/private/.rand
+
+unique_subject    = no
+default_md        = sha256
+policy            = policy_strict
+email_in_dn       = no
+string_mask       = utf8only
+default_days      = 7300        # ~20 years for root (only for self-sign)
+default_crl_days  = 30
+
+# Root should never sign end-entity directly
+x509_extensions   = v3_ca
+crl_extensions    = crl_ext
+
+[ policy_strict ]
+countryName             = supplied
+stateOrProvinceName     = supplied
+localityName            = supplied
+organizationName        = supplied
+organizationalUnitName  = optional
+commonName              = supplied
+
+[ req ]
+default_bits        = 4096
+default_md          = sha256
+string_mask         = utf8only
+prompt              = no
+distinguished_name  = dn_root
+x509_extensions     = v3_ca
+
+[ dn_root ]
+C  = RU
+ST = Moscow Oblast
+L  = Odintsovo
+O  = Golden Deals LLC
+streetAddress       = ulitsa Sosnovaya 34, 122
+postalCode          = 143006
+CN = Golden Deals LLC Root CA
+
+[ v3_ca ]
+basicConstraints = critical, CA:true, pathlen:1
+keyUsage         = critical, keyCertSign, cRLSign
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always
+nameConstraints = permitted;DNS:.goldendeals.ru,permitted;DNS:.gdllc.ru,permitted;DNS:.gdllc.dev
+
+[ crl_ext ]
+authorityKeyIdentifier=keyid:always
+
+[ v3_intermediate_ca ]
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage         = critical, keyCertSign, cRLSign
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+
+# Only issue for these org domains
+nameConstraints = permitted;DNS:.goldendeals.ru,permitted;DNS:.gdllc.ru,permitted;DNS:.gdllc.dev

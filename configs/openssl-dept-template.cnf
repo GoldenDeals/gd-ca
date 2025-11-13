@@ -1,0 +1,118 @@
+# OpenSSL Department Issuing CA template - Golden Deals LLC
+# Replace @DEPT@ via script; issues end-entity certs for server, client, email, vpn.
+
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir               = ./ca/departments/@DEPT@
+certs             = $dir/certs
+crl_dir           = $dir/crl
+database          = $dir/index.txt
+new_certs_dir     = $dir/newcerts
+certificate       = $dir/ca.cert.pem
+serial            = $dir/serial
+crlnumber         = $dir/crlnumber
+crl               = $dir/crl/@DEPT@.crl.pem
+private_key       = $dir/private/ca.key.pem
+RANDFILE          = $dir/private/.rand
+
+unique_subject    = no
+default_md        = sha256
+policy            = policy_loose
+email_in_dn       = no
+string_mask       = utf8only
+default_days      = 397          # leaf certs
+default_crl_days  = 14
+x509_extensions   = usr_cert     # default for leaves
+crl_extensions    = crl_ext
+
+[ policy_loose ]
+countryName             = supplied
+stateOrProvinceName     = supplied
+localityName            = supplied
+organizationName        = supplied
+organizationalUnitName  = optional
+commonName              = supplied
+
+[ req ]
+default_bits        = 4096
+default_md          = sha256
+string_mask         = utf8only
+prompt              = no
+distinguished_name  = dn_dept
+
+[ dn_dept ]
+C  = RU
+ST = Moscow Oblast
+L  = Odintsovo
+O  = Golden Deals LLC
+OU = @DEPT@
+streetAddress       = ulitsa Sosnovaya 34, 122
+postalCode          = 143006
+CN = Golden Deals LLC @DEPT@ Issuing CA
+
+[ v3_intermediate_ca ]
+basicConstraints = critical, CA:true, pathlen:0
+keyUsage         = critical, keyCertSign, cRLSign
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+
+# Only issue for these org domains
+nameConstraints = permitted;DNS:.goldendeals.ru,permitted;DNS:.gdllc.ru,permitted;DNS:.gdllc.dev
+
+[ crl_ext ]
+authorityKeyIdentifier=keyid:always
+
+# ---- End-entity profiles ----
+
+[ usr_cert ]  # Multipurpose default (server + client + email)
+basicConstraints = critical, CA:false
+keyUsage         = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth, emailProtection
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+subjectAltName = @alt_names
+crlDistributionPoints = URI:http://ca.gdllc.ru/crl/@DEPT@.crl.pem
+
+[ server_cert ]
+basicConstraints = critical, CA:false
+keyUsage         = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+subjectAltName = @alt_names
+crlDistributionPoints = URI:http://ca.gdllc.ru/crl/@DEPT@.crl.pem
+
+[ client_cert ]   # mTLS/VPN
+basicConstraints = critical, CA:false
+keyUsage         = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+subjectAltName = @alt_names
+crlDistributionPoints = URI:http://ca.gdllc.ru/crl/@DEPT@.crl.pem
+
+[ email_cert ]    # S/MIME sign
+basicConstraints = critical, CA:false
+keyUsage         = critical, digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+extendedKeyUsage = emailProtection
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+subjectAltName = @alt_names
+crlDistributionPoints = URI:http://ca.gdllc.ru/crl/@DEPT@.crl.pem
+
+[ vpn_server_cert ]
+basicConstraints = critical, CA:false
+keyUsage         = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+# VPN servers may omit SANs or use IPs; CN used for identification
+subjectAltName = @alt_names
+crlDistributionPoints = URI:http://ca.gdllc.ru/crl/@DEPT@.crl.pem
+
+# alt_names is filled by the issuing script via a temporary -config overlay
+[ alt_names ]
+# Placeholder; the issuing script injects DNS/email/IP/URI entries.
+
