@@ -30,7 +30,7 @@ acme.gdllc.local, acme.gdllc.dev {
 }
 
 :80 {
-    filesystem ca-repo git https://github.com/YOUR_USERNAME/YOUR_REPO.git {
+    filesystem ca-repo git https://github.com/GoldenDeals/gd-ca.git {
         refresh_period 5m
     }
 
@@ -63,7 +63,7 @@ gdllc.ru {
 
     tls {
         issuer acme {
-            email admin@gdllc.ru
+            email admin@goldendeals.ru
         }
     }
 
@@ -86,7 +86,7 @@ gdllc.local, *.gdllc.local {
         issuer acme {
             ca https://acme.gdllc.local/acme/internal/directory
             ca_root /etc/caddy/ca/root.cert.pem
-            email admin@gdllc.local
+            email admin@goldendeals.ru
         }
     }
 
@@ -109,7 +109,7 @@ gdllc.dev, *.gdllc.dev {
         issuer acme {
             ca https://acme.gdllc.dev/acme/internal/directory
             ca_root /etc/caddy/ca/root.cert.pem
-            email admin@gdllc.dev
+            email admin@goldendeals.ru
         }
     }
 
