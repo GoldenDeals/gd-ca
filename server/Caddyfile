@@ -1,22 +1,31 @@
 {
-	admin off
-    auto_https off
+	admin off	
+	auto_https off
 
-    debug
-    log caddy {
-        output stdout
-        format console
-        level DEBUG
-    }
+	log {
+		output stdout
+		format json
+		level INFO
+	}
 
-    http_port 80
-    https_port 443
+	log access {
+		output file /var/log/caddy/access.log {
+			roll_size 100mb
+			roll_keep 10
+			roll_keep_for 720h
+		}
+		format json
+	}
 
-    filesystem ca-repo git https://github.com/GoldenDeals/gd-ca.git {
-        refresh_period 5m
-    }
-    
+	http_port 80
+	https_port 443
+
+	filesystem ca-repo git https://github.com/GoldenDeals/gd-ca.git {
+		refresh_period 5m
+	}
+	
 	email admin@goldendeals.ru
+	
 	pki {
 		ca gdllc {
 			name "Golden Deals LLC Private CA"
@@ -35,8 +44,30 @@
 	}
 }
 
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+		-Server
+		-X-Powered-By
+	}
+}
+
+(rate_limit_strict) {
+	rate_limit {remote.ip} 30r/m
+}
+
+(rate_limit_moderate) {
+	rate_limit {remote.ip} 60r/m
+}
+
 http:// {
-    redir https://{host}{uri}
+	redir https://{host}{uri} permanent
 }
 
 acme.gdllc.ru, acme.gdllc.local {
@@ -47,7 +78,7 @@ acme.gdllc.ru, acme.gdllc.local {
 		on_demand
 	}
 
-        
+	import security_headers
 	acme_server {
 		ca gdllc
 
@@ -58,26 +89,49 @@ acme.gdllc.ru, acme.gdllc.local {
 
 	@root path /
 	respond @root "Golden Deals LLC ACME: use https://acme.gdllc.ru/acme/gdllc/directory" 200
+	request_body {
+		max_size 10MB
+	}
 }
 
 ca.gdllc.ru {
 	tls {
 		issuer acme {
 			email admin@goldendeals.ru
-			#dir https://acme-v02.api.letsencrypt.org/directory
-			dir https://acme-staging-v02.api.letsencrypt.org/directory
+			dir https://acme-v02.api.letsencrypt.org/directory
 		}
-        on_demand
+		on_demand
 	}
+	import security_headers
 
-    route {
-        rate_limit {remote.ip} 100r/m
-        file_server {
-            fs ca-repo
-            root public
-            browse
-        }
-    }
+	route {
+		import rate_limit_moderate
+
+		@root path /
+		handle @root {
+			rewrite * /index.html
+			file_server {
+				fs ca-repo
+				root public
+			}
+		}
+
+		@public_certs path /certs/* /crl/* /bundle.pem /index.html
+		handle @public_certs {
+			file_server {
+				fs ca-repo
+				root public
+			}
+		}
+
+		@health path /health
+		respond @health "OK" 200
+		respond 404
+	}
+	
+	request_body {
+		max_size 1MB
+	}
 }
 
 ca.gdllc.local ca.gdllc.dev {
@@ -89,12 +143,40 @@ ca.gdllc.local ca.gdllc.dev {
 		on_demand
 	}
 
-    route {
-        rate_limit {remote.ip} 100r/m
-        file_server {
-            fs ca-repo
-            root public
-            browse
-        }
-    }
+	import security_headers
+
+	@internal_only {
+		remote_ip 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 127.0.0.1/8
+	}
+
+	handle @internal_only {
+		route {
+			import rate_limit_strict
+
+			@root path /
+			handle @root {
+				rewrite * /index.html
+				file_server {
+					fs ca-repo
+					root public
+				}
+			}
+
+			@public_certs path /certs/* /crl/* /bundle.pem /index.html
+			handle @public_certs {
+				file_server {
+					fs ca-repo
+					root public
+				}
+			}
+
+			respond 404
+		}
+	}
+	
+	respond "Access Denied: Internal network only" 403
+	request_body {
+		max_size 1MB
+	}
 }
+
