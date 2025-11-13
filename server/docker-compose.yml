@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  ca-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ca-server
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Root CA certificate
+      - ../ca/root/root.cert.pem:/etc/caddy/ca/root.cert.pem:ro
+      # Intermediate CA certificate and key (mount from department CA)
+      - ../ca/departments/local/ca.cert.pem:/etc/caddy/ca/intermediate.cert.pem:ro
+      - ../ca/departments/local/private/ca.key.pem:/etc/caddy/ca/intermediate.key.pem:ro
+      # ACME server certificate and key (needs to be created)
+      - ./certs/acme-server.cert.pem:/etc/caddy/ca/acme-server.cert.pem:ro
+      - ./certs/acme-server.key.pem:/etc/caddy/ca/acme-server.key.pem:ro
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+

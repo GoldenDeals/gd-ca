@@ -1,0 +1,9 @@
+# Exclude certificates and private keys
+certs/
+*.pem
+*.key
+*.crt
+
+# Exclude docker volumes
+data/
+

@@ -1,0 +1,122 @@
+{
+    admin off
+    auto_https off
+    
+    pki {
+        ca internal {
+            name "Golden Deals LLC CA"
+            root_cert_pem_file /etc/caddy/ca/root.cert.pem
+            intermediate_cert_pem_file /etc/caddy/ca/intermediate.cert.pem
+            intermediate_key_pem_file /etc/caddy/ca/intermediate.key.pem
+        }
+    }
+}
+
+# ACME server endpoint for internal certificate issuance
+acme.gdllc.local, acme.gdllc.dev {
+    ratelimit {
+        zone acme {
+            key {remote_host}
+            window 1m
+            events 30
+            burst 50
+        }
+    }
+
+    tls /etc/caddy/ca/acme-server.cert.pem /etc/caddy/ca/acme-server.key.pem
+
+    acme_server {
+        ca internal
+    }
+}
+
+# Public CA server - serves certificates and CRLs from git repository
+:80 {
+    root * /srv/public
+
+    filesystem ca-repo git https://github.com/YOUR_USERNAME/YOUR_REPO.git {
+        refresh_period 5m
+    }
+
+    ratelimit {
+        zone public {
+            key {remote_host}
+            window 1m
+            events 60
+            burst 100
+        }
+    }
+
+    file_server {
+        fs ca-repo
+        browse
+    }
+}
+
+gdllc.ru {
+    ratelimit {
+        zone public {
+            key {remote_host}
+            window 1m
+            events 100
+            burst 200
+        }
+    }
+
+    tls {
+        issuer acme {
+            email admin@gdllc.ru
+        }
+    }
+
+    handle {
+        respond "CA Server - Public Domain"
+    }
+}
+
+gdllc.local, *.gdllc.local {
+    ratelimit {
+        zone internal {
+            key {remote_host}
+            window 1m
+            events 100
+            burst 200
+        }
+    }
+
+    tls {
+        issuer acme {
+            ca https://acme.gdllc.local/acme/internal/directory
+            ca_root /etc/caddy/ca/root.cert.pem
+            email admin@gdllc.local
+        }
+    }
+
+    handle {
+        respond "CA Server - Internal Domain (gdllc.local)"
+    }
+}
+
+gdllc.dev, *.gdllc.dev {
+    ratelimit {
+        zone internal {
+            key {remote_host}
+            window 1m
+            events 100
+            burst 200
+        }
+    }
+
+    tls {
+        issuer acme {
+            ca https://acme.gdllc.dev/acme/internal/directory
+            ca_root /etc/caddy/ca/root.cert.pem
+            email admin@gdllc.dev
+        }
+    }
+
+    handle {
+        respond "CA Server - Internal Domain (gdllc.dev)"
+    }
+}
+
