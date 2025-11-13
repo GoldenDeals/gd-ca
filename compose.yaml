@@ -1,8 +1,8 @@
 services:
   ca-server:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./server
+      dockerfile: server/Dockerfile
     container_name: ca-server
     ports:
       - "80:80"
