@@ -70,12 +70,12 @@ ca.gdllc.ru {
         on_demand
 	}
 
-    root * /public
-
     route {
         rate_limit {remote.ip} 100r/m
         file_server {
             fs ca-repo
+            root public
+            browse
         }
     }
 }
@@ -89,12 +89,12 @@ ca.gdllc.local ca.gdllc.dev {
 		on_demand
 	}
 
-    root * /public
-
     route {
         rate_limit {remote.ip} 100r/m
         file_server {
             fs ca-repo
+            root public
+            browse
         }
     }
 }
