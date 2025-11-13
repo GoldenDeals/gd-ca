@@ -2,7 +2,7 @@ services:
   ca-server:
     build:
       context: ./server
-      dockerfile: server/Dockerfile
+      dockerfile: Dockerfile
     container_name: ca-server
     ports:
       - "80:80"
@@ -15,6 +15,9 @@ services:
 
       - ./ca/departments/local/certs/ACME_Server_HTTP_Certificate__20251113114744.fullchain.pem:/etc/caddy/ca/acme-server.cert.pem:ro
       - ./ca/departments/local/certs/ACME_Server_HTTP_Certificate__20251113114744.key.pem:/etc/caddy/ca/acme-server.key.pem:ro
+    extra_hosts:
+      - "acme.gdllc.local:127.0.0.1"
+      - "ca.gdllc.local:127.0.0.1"
     restart: unless-stopped
 
 networks:

@@ -1,10 +1,10 @@
-FROM caddy:2.7.6-builder AS builder
+FROM caddy:builder AS builder
 
 RUN xcaddy build \
     --with github.com/mohammed90/caddy-git-fs \
     --with github.com/RussellLuo/caddy-ext/ratelimit
 
-FROM caddy:2.7.6
+FROM caddy
 
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 

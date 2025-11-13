@@ -1,120 +1,100 @@
 {
-    admin off
+	admin off
     auto_https off
-    
-    pki {
-        ca internal {
-            name "Golden Deals LLC CA"
-            root_cert_pem_file /etc/caddy/ca/root.cert.pem
-            intermediate_cert_pem_file /etc/caddy/ca/intermediate.cert.pem
-            intermediate_key_pem_file /etc/caddy/ca/intermediate.key.pem
-        }
-    }
-}
 
-acme.gdllc.local, acme.gdllc.dev {
-    ratelimit {
-        zone acme {
-            key {remote_host}
-            window 1m
-            events 30
-            burst 50
-        }
+    debug
+    log caddy {
+        output stdout
+        format console
+        level DEBUG
     }
 
-    tls /etc/caddy/ca/acme-server.cert.pem /etc/caddy/ca/acme-server.key.pem
+    http_port 80
+    https_port 443
 
-    acme_server {
-        ca internal
-    }
-}
-
-:80 {
     filesystem ca-repo git https://github.com/GoldenDeals/gd-ca.git {
         refresh_period 5m
     }
+    
+	email admin@goldendeals.ru
+	pki {
+		ca gdllc {
+			name "Golden Deals LLC Private CA"
 
-    ratelimit {
-        zone public {
-            key {remote_host}
-            window 1m
-            events 60
-            burst 100
-        }
-    }
+			root {
+				format pem_file
+				cert /etc/caddy/ca/root.cert.pem
+			}
+
+			intermediate {
+				format pem_file
+				cert /etc/caddy/ca/intermediate.cert.pem
+				key  /etc/caddy/ca/intermediate.key.pem
+			}
+		}
+	}
+}
+
+http:// {
+    redir https://{host}{uri}
+}
+
+acme.gdllc.ru, acme.gdllc.local {
+	tls {
+		issuer internal {
+			ca gdllc
+		}
+		on_demand
+	}
+
+        
+	acme_server {
+		ca gdllc
+
+		allow {
+			domains gdllc.ru gdllc.local
+		}
+	}
+
+	@root path /
+	respond @root "Golden Deals LLC ACME: use https://acme.gdllc.ru/acme/gdllc/directory" 200
+}
+
+ca.gdllc.ru {
+	tls {
+		issuer acme {
+			email admin@goldendeals.ru
+			#dir https://acme-v02.api.letsencrypt.org/directory
+			dir https://acme-staging-v02.api.letsencrypt.org/directory
+		}
+        on_demand
+	}
 
     root * /public
 
-    file_server {
-        fs ca-repo
-        browse
+    route {
+        rate_limit {remote.ip} 100r/m
+        file_server {
+            fs ca-repo
+        }
     }
 }
 
-gdllc.ru {
-    ratelimit {
-        zone public {
-            key {remote_host}
-            window 1m
-            events 100
-            burst 200
-        }
-    }
+ca.gdllc.local ca.gdllc.dev {
+	tls {
+		issuer acme {
+			dir https://acme.gdllc.local/acme/gdllc/directory
+			trusted_roots /etc/caddy/ca/root.cert.pem
+		}
+		on_demand
+	}
 
-    tls {
-        issuer acme {
-            email admin@goldendeals.ru
-        }
-    }
+    root * /public
 
-    handle {
-        respond "CA Server - Public Domain"
+    route {
+        rate_limit {remote.ip} 100r/m
+        file_server {
+            fs ca-repo
+        }
     }
 }
-
-gdllc.local, *.gdllc.local {
-    ratelimit {
-        zone internal {
-            key {remote_host}
-            window 1m
-            events 100
-            burst 200
-        }
-    }
-
-    tls {
-        issuer acme {
-            ca https://acme.gdllc.local/acme/internal/directory
-            ca_root /etc/caddy/ca/root.cert.pem
-            email admin@goldendeals.ru
-        }
-    }
-
-    handle {
-        respond "CA Server - Internal Domain (gdllc.local)"
-    }
-}
-
-gdllc.dev, *.gdllc.dev {
-    ratelimit {
-        zone internal {
-            key {remote_host}
-            window 1m
-            events 100
-            burst 200
-        }
-    }
-
-    tls {
-        issuer acme {
-            ca https://acme.gdllc.dev/acme/internal/directory
-            ca_root /etc/caddy/ca/root.cert.pem
-            email admin@goldendeals.ru
-        }
-    }
-
-    handle {
-        respond "CA Server - Internal Domain (gdllc.dev)"
-    }
-}
-

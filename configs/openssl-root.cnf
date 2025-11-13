@@ -71,4 +71,4 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always,issuer
 
 # Only issue for these org domains
-nameConstraints = permitted;DNS:.goldendeals.ru,permitted;DNS:.gdllc.ru,permitted;DNS:.gdllc.dev
+nameConstraints = permitted;DNS:.goldendeals.ru,permitted;DNS:.gdllc.ru,permitted;DNS:.gdllc.dev,permitted;DNS:.gdllc.local

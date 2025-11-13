@@ -132,3 +132,4 @@ if [[ $# -gt 0 ]]; then
   openssl req -in "$CSR_FILE" -noout -text | grep -A 10 "X509v3 Subject Alternative Name" || true
 fi
 
+
